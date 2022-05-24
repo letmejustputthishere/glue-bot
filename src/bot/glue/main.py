@@ -1,10 +1,12 @@
 import logging
 from dotenv import load_dotenv
-from glue.discord_bot.client import Client
+from glue.discord_bot.client import MyClient
 from glue.database.database import Database
-from glue.discord_bot.cogs.on_join import OnJoin
 import os
 import discord
+from typing import Literal, Optional
+from discord import app_commands
+from glue.discord_bot.groups.project import Project
 
 # add logging
 logger = logging.getLogger('discord')
@@ -23,8 +25,41 @@ DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 # connection to database
 db = Database('database.db')
 
-# setup bot
-intents = discord.Intents(guilds=True, members=True,)
-bot = Client(command_prefix="$", intents=intents)
-bot.add_cog(OnJoin(bot))
-bot.run(DISCORD_TOKEN)
+
+intents = discord.Intents.default()
+intents.members = True
+intents.message_content = True
+client = MyClient(intents=intents)
+
+client.tree.add_command(Project(client))
+
+
+@client.tree.command()
+async def hello(interaction: discord.Interaction):
+    """Says hello!"""
+    await interaction.response.send_message(f'Hi, {interaction.user.mention}', ephemeral=True)
+
+
+@client.tree.command()
+@app_commands.describe(
+    first_value='The first value you want to add something to',
+    second_value='The value you want to add to the first value',
+)
+async def add(interaction: discord.Interaction, first_value: int, second_value: int):
+    """Adds two numbers together."""
+    await interaction.response.send_message(f'{first_value} + {second_value} = {first_value + second_value}')
+
+
+@client.tree.command()
+async def setup(interaction: discord.Interaction, name: str, canister_id: str, standard: Literal['ext', 'dip721'], min: int = 1, max: Optional[int] = None):
+    """Set up an NFT project"""
+    try:
+        db.insert_canister(canister_id, standard, min, max, name)
+        await interaction.response.send_message(f'Added project {name} to database')
+    except Exception as e:
+        await interaction.response.send_message(f'Error: {e}')
+
+
+if __name__ == '__main__':
+    print("logging in...")
+    client.run(DISCORD_TOKEN)

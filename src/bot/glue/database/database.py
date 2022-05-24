@@ -1,5 +1,6 @@
 
 import sqlite3 as sl
+from typing import Optional
 
 
 # add sqlite database class
@@ -74,7 +75,7 @@ class Database:
         rows = self.cur.fetchall()
         return rows
 
-    def insert_canister(self, canister_id: str, standard: str, min: int, max: int, name: str):
+    def insert_canister(self, canister_id: str, standard: str, min: int, max: Optional[int], name: str):
         """Insert a canister into the database"""
         self.cur.execute("INSERT INTO canisters VALUES (?, ?, ?, ?, ?)",
                          (canister_id, standard, min, max, name))

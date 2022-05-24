@@ -6,8 +6,8 @@ authors = ["Moritz <fullermoritz@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-"discord.py" = "^1.7.3"
 python-dotenv = "^0.20.0"
+"discord.py" = {git = "git@github.com:Rapptz/discord.py.git"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
