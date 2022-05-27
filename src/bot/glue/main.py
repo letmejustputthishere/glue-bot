@@ -5,6 +5,7 @@ import os
 import discord
 from discord import app_commands
 from glue.discord_bot.groups.project import Project
+from typing import Literal
 
 # add logging
 logger = logging.getLogger('discord')
@@ -19,7 +20,6 @@ logger.addHandler(handler)
 # add variable from .env file
 load_dotenv()
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
-
 
 
 intents = discord.Intents.default()
@@ -46,7 +46,14 @@ async def add(interaction: discord.Interaction, first_value: int, second_value: 
     await interaction.response.send_message(f'{first_value} + {second_value} = {first_value + second_value}')
 
 
-
+@client.tree.command()
+# use this decorator to hide commmands from certain users
+# https://discordpy.readthedocs.io/en/latest/interactions/api.html?highlight=permissions#discord.app_commands.default_permissions
+@discord.app_commands.default_permissions()
+@app_commands.describe(fruits='fruits to choose from')
+async def fruit(interaction: discord.Interaction, fruits: Literal['apple', 'banana', 'cherry']):
+    print("invoked")
+    await interaction.response.send_message(f'Your favourite fruit is {fruits}.')
 
 if __name__ == '__main__':
     print("logging in...")
