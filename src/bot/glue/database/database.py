@@ -1,151 +1,57 @@
+from turtle import up
+from pymongo.mongo_client import MongoClient
+from typing import TypedDict, Literal, Optional
 
-import sqlite3 as sl
-from typing import Optional
+
+class Canister(TypedDict):
+    canister_id: str
+    standard: Literal['ext', 'dip721']
+    min: int
+    max: Optional[int]
+    name: str
+    users: list[int]
 
 
-# add sqlite database class
+class GlueGuild(TypedDict):
+    server_id: int
+    canisters: list[Canister]
+
+
 class Database:
-    def __init__(self, db):
-        self.conn = sl.connect(db)
-        self.cur = self.conn.cursor()
-        self.cur.execute(
-            "CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY)"
-        )
-        self.cur.execute(
-            "CREATE TABLE IF NOT EXISTS principals (principal TEXT PRIMARY KEY, user_id INTEGER, FOREIGN KEY(user_id) REFERENCES users(user_id))"
-        )
-        self.cur.execute(
-            "CREATE TABLE IF NOT EXISTS projects (canister_id TEXT PRIMARY KEY, standard TEXT, min INTEGER, max INTEGER, name TEXT)"
-        )
-        self.cur.execute(
-            "CREATE TABLE IF NOT EXISTS checks (canister_id TEXT, user_id INTEGER, FOREIGN KEY(user_id) REFERENCES users(user_id), FOREIGN KEY(canister_id) REFERENCES canisters(canister_id))"
-        )
-        self.cur.execute(
-            "CREATE TABLE IF NOT EXISTS guilds (guild_id INTEGER PRIMARY KEY, tier TEXT)"
-        )
-        self.cur.execute(
-            "CREATE TABLE IF NOT EXISTS verifies ( guild_id INTEGER, canister_id TEXT, FOREIGN KEY(guild_id) REFERENCES guilds(guild_id), FOREIGN KEY(canister_id) REFERENCES canisters(canister_id))"
-        )
-        self.conn.commit()
+    def __init__(self):
+        self.client = MongoClient()
+        self.db = self.client.db
+        self.collection = self.db.collection
 
-    # users
+    def insert(self, document: GlueGuild):
+        # if the document already exists, update it
+        if self.collection.find_one({"server_id": document['server_id']}):
+            self.collection.update_one(
+                {"server_id": document['server_id']},
+                {"$push":
+                    # we have to use the first element of the list, otherwise we have nested lists
+                    {"canisters": document['canisters'][0]}
+                 })
+        else:
+            self.collection.insert_one(document)   # type: ignore
 
-    def fetch_users(self):
-        """Fetch all users from the database"""
-        self.cur.execute("SELECT * FROM users")
-        rows = self.cur.fetchall()
-        return rows
+    def find(self, query):
+        return self.collection.find(query)
 
-    def insert_user(self, user_id: int):
-        """Insert a user into the database"""
-        self.cur.execute("INSERT INTO users VALUES (?)",
-                         (user_id,))
-        self.conn.commit()
+    def find_one(self, query):
+        return self.collection.find_one(query)
 
-    def remove_user(self, user_id: int):
-        """Remove a user from the database"""
-        self.cur.execute("DELETE FROM users WHERE user_id=?", (user_id,))
-        self.conn.commit()
+    def update(self, query, update):
+        self.collection.update_one(query, update)
 
-    # principals
+    def delete_server(self, query):
+        return self.collection.delete_one(query)
 
-    def fetch_principals(self):
-        """Fetch all principals from the database"""
-        self.cur.execute("SELECT * FROM principals")
-        rows = self.cur.fetchall()
-        return rows
-
-    def insert_principal(self, principal: str, user_id: int):
-        """Insert a principal into the database"""
-        self.cur.execute("INSERT INTO principals VALUES (?, ?)",
-                         (principal, user_id))
-        self.conn.commit()
-
-    def remove_principal(self, principal: str):
-        """Remove a principal from the database"""
-        self.cur.execute(
-            "DELETE FROM principals WHERE principal=?", (principal,))
-        self.conn.commit()
-
-    # projects
-
-    def fetch_projects(self):
-        """Fetch all canisters from the database"""
-        self.cur.execute("SELECT * FROM canisters")
-        rows = self.cur.fetchall()
-        return rows
-
-    def insert_project(self, canister_id: str, standard: str, min: int, max: Optional[int], name: str):
-        """Insert a canister into the database"""
-        self.cur.execute("INSERT INTO canisters VALUES (?, ?, ?, ?, ?)",
-                         (canister_id, standard, min, max, name))
-        self.conn.commit()
-
-    def remove_project(self, canister_id):
-        """Remove a canister from the database"""
-        self.cur.execute("DELETE FROM canisters WHERE canister_id=?",
-                         (canister_id,))
-        self.conn.commit()
-
-    # checks
-
-    def fetch_checks(self):
-        """Fetch all checks from the database"""
-        self.cur.execute("SELECT * FROM checks")
-        rows = self.cur.fetchall()
-        return rows
-
-    def insert_check(self, canister_id: str, user_id: int):
-        """Insert a check into the database"""
-        self.cur.execute("INSERT INTO checks VALUES (?, ?)",
-                         (canister_id, user_id))
-        self.conn.commit()
-
-    def remove_check(self, canister_id: str, user_id: int):
-        self.cur.execute("DELETE FROM checks WHERE canister_id=? AND user_id=?",
-                         (canister_id, user_id))
-        self.conn.commit()
-
-    # guilds
-
-    def fetch_guilds(self):
-        """Fetch all guilds from the database"""
-        self.cur.execute("SELECT * FROM guilds")
-        rows = self.cur.fetchall()
-        return rows
-
-    def insert_guild(self, guild_id: int, tier: str):
-        """Insert a guild into the database"""
-        self.cur.execute("INSERT INTO guilds VALUES (?, ?)",
-                         (guild_id, tier))
-        self.conn.commit()
-
-    def remove_guild(self, guild_id: int):
-        """Remove a guild from the database"""
-        self.cur.execute("DELETE FROM guilds WHERE guild_id=?",
-                         (guild_id,))
-        self.conn.commit()
-
-    # verifies
-
-    def fetch_verifies(self):
-        """Fetch all verifies from the database"""
-        self.cur.execute("SELECT * FROM verifies")
-        rows = self.cur.fetchall()
-        return rows
-
-    def insert_verify(self, guild_id: int, canister_id: str):
-        """Insert a verify into the database"""
-        self.cur.execute("INSERT INTO verifies VALUES (?, ?)",
-                         (guild_id, canister_id))
-        self.conn.commit()
-
-    def remove_verify(self, guild_id: int, canister_id: str):
-        """Remove a verify from the database"""
-        self.cur.execute("DELETE FROM verifies WHERE guild_id=? AND canister_id=?",
-                         (guild_id, canister_id))
-        self.conn.commit()
-
-    # called when reference to the object is destroyed, eg garbage collected
-    def __del__(self):
-        self.conn.close()
+    def delete_canister(self, guild_id, canister_id):
+        return self.collection.update_one(
+            {"server_id": guild_id},
+            {"$pull":
+             {"canisters":
+              {"canister_id": canister_id}
+              }
+             })

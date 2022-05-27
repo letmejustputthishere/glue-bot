@@ -6,6 +6,7 @@ import discord
 from discord import app_commands
 from glue.discord_bot.groups.project import Project
 from typing import Literal
+from glue.database.database import Database
 
 # add logging
 logger = logging.getLogger('discord')
@@ -29,6 +30,9 @@ client = MyClient(intents=intents)
 
 client.tree.add_command(Project(client))
 
+# connection to database
+db = Database()
+
 
 @client.tree.command()
 async def hello(interaction: discord.Interaction):
@@ -44,6 +48,16 @@ async def hello(interaction: discord.Interaction):
 async def add(interaction: discord.Interaction, first_value: int, second_value: int):
     """Adds two numbers together."""
     await interaction.response.send_message(f'{first_value} + {second_value} = {first_value + second_value}')
+
+
+@client.tree.command()
+async def remove_guild(interaction: discord.Interaction):
+    """Remove a project"""
+    try:
+        result = db.delete_server({"server_id": interaction.guild_id})
+        await interaction.response.send_message(f'Removed project from database. {result}')
+    except Exception as e:
+        await interaction.response.send_message(f'Error: {e}')
 
 
 @client.tree.command()
