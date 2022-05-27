@@ -15,7 +15,7 @@ class Database:
             "CREATE TABLE IF NOT EXISTS principals (principal TEXT PRIMARY KEY, user_id INTEGER, FOREIGN KEY(user_id) REFERENCES users(user_id))"
         )
         self.cur.execute(
-            "CREATE TABLE IF NOT EXISTS canisters (canister_id TEXT PRIMARY KEY, standard TEXT, min INTEGER, max INTEGER, name TEXT)"
+            "CREATE TABLE IF NOT EXISTS projects (canister_id TEXT PRIMARY KEY, standard TEXT, min INTEGER, max INTEGER, name TEXT)"
         )
         self.cur.execute(
             "CREATE TABLE IF NOT EXISTS checks (canister_id TEXT, user_id INTEGER, FOREIGN KEY(user_id) REFERENCES users(user_id), FOREIGN KEY(canister_id) REFERENCES canisters(canister_id))"
@@ -67,21 +67,21 @@ class Database:
             "DELETE FROM principals WHERE principal=?", (principal,))
         self.conn.commit()
 
-    # canisters
+    # projects
 
-    def fetch_canisters(self):
+    def fetch_projects(self):
         """Fetch all canisters from the database"""
         self.cur.execute("SELECT * FROM canisters")
         rows = self.cur.fetchall()
         return rows
 
-    def insert_canister(self, canister_id: str, standard: str, min: int, max: Optional[int], name: str):
+    def insert_project(self, canister_id: str, standard: str, min: int, max: Optional[int], name: str):
         """Insert a canister into the database"""
         self.cur.execute("INSERT INTO canisters VALUES (?, ?, ?, ?, ?)",
                          (canister_id, standard, min, max, name))
         self.conn.commit()
 
-    def remove_canister(self, canister_id):
+    def remove_project(self, canister_id):
         """Remove a canister from the database"""
         self.cur.execute("DELETE FROM canisters WHERE canister_id=?",
                          (canister_id,))

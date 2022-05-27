@@ -36,6 +36,7 @@ pip-log.txt
 
 /test.py
 /test_*.*
+__pycache__
 
 /setup.cfg
 MANIFEST.in

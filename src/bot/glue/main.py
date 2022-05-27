@@ -1,10 +1,8 @@
 import logging
 from dotenv import load_dotenv
 from glue.discord_bot.client import MyClient
-from glue.database.database import Database
 import os
 import discord
-from typing import Literal, Optional
 from discord import app_commands
 from glue.discord_bot.groups.project import Project
 
@@ -22,8 +20,6 @@ logger.addHandler(handler)
 load_dotenv()
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 
-# connection to database
-db = Database('database.db')
 
 
 intents = discord.Intents.default()
@@ -50,14 +46,6 @@ async def add(interaction: discord.Interaction, first_value: int, second_value: 
     await interaction.response.send_message(f'{first_value} + {second_value} = {first_value + second_value}')
 
 
-@client.tree.command()
-async def setup(interaction: discord.Interaction, name: str, canister_id: str, standard: Literal['ext', 'dip721'], min: int = 1, max: Optional[int] = None):
-    """Set up an NFT project"""
-    try:
-        db.insert_canister(canister_id, standard, min, max, name)
-        await interaction.response.send_message(f'Added project {name} to database')
-    except Exception as e:
-        await interaction.response.send_message(f'Error: {e}')
 
 
 if __name__ == '__main__':
