@@ -31,8 +31,8 @@ class Bot(commands.Bot):
 
     # loop
     @tasks.loop(seconds=1)
-    async def check_ownership():
-        pass
+    async def check_ownership(self):
+        print("moin")
 
     # called when bot is ready
     async def on_ready(self):
