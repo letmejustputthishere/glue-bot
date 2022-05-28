@@ -1,3 +1,4 @@
+from discord.ext import tasks
 from discord.ext import commands
 from discord import app_commands
 from discord import Guild
@@ -12,17 +13,9 @@ DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 MY_GUILD = discord.Object(id=974261271857860649)  # replace with your guild id
 
 
-class MyClient(discord.Client):
+class Bot(commands.Bot):
     def __init__(self, *, intents: discord.Intents):
-        super().__init__(intents=intents)
-        # A CommandTree is a special type that holds all the application command
-        # state required to make it work. This is a separate class because it
-        # allows all the extra state to be opt-in.
-        # Whenever you want to work with application commands, your tree is used
-        # to store and work with them.
-        # Note: When using commands.Bot instead of discord.Client, the bot will
-        # maintain its own tree instead.
-        self.tree = app_commands.CommandTree(self)
+        super().__init__(intents=intents, command_prefix="")
 
     # In this basic example, we just synchronize the app commands to one guild.
     # Instead of specifying a guild to every command, we copy over our global commands instead.
@@ -31,7 +24,17 @@ class MyClient(discord.Client):
         # This copies the global commands over to your guild.
         self.tree.copy_global_to(guild=MY_GUILD)
         await self.tree.sync(guild=MY_GUILD)
+        self.check_ownership.start()
 
+        # to add a cog do the following
+        # self.add_cog()
+
+    # loop
+    @tasks.loop(seconds=1)
+    async def check_ownership():
+        pass
+
+    # called when bot is ready
     async def on_ready(self):
         print(f"We have logged in as {self.user}.")
 
@@ -44,6 +47,7 @@ class MyClient(discord.Client):
         if message.content.startswith('$hello'):
             await message.channel.send('Hello!')
 
+    # called when bot is added to guild
     async def on_guild_join(self, guild: Guild):
         # get the owner of a guild, this needs the "members" intent
         owner = guild.owner

@@ -1,6 +1,6 @@
 import logging
 from dotenv import load_dotenv
-from glue.discord_bot.client import MyClient
+from glue.discord_bot.bot import Bot
 import os
 import discord
 from discord import app_commands
@@ -26,21 +26,21 @@ DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
-client = MyClient(intents=intents)
+bot = Bot(intents=intents)
 
-client.tree.add_command(Project(client))
+bot.tree.add_command(Project(bot))
 
 # connection to database
 db = Database()
 
 
-@client.tree.command()
+@bot.tree.command()
 async def hello(interaction: discord.Interaction):
     """Says hello!"""
     await interaction.response.send_message(f'Hi, {interaction.user.mention}', ephemeral=True)
 
 
-@client.tree.command()
+@bot.tree.command()
 @app_commands.describe(
     first_value='The first value you want to add something to',
     second_value='The value you want to add to the first value',
@@ -50,7 +50,7 @@ async def add(interaction: discord.Interaction, first_value: int, second_value: 
     await interaction.response.send_message(f'{first_value} + {second_value} = {first_value + second_value}')
 
 
-@client.tree.command()
+@bot.tree.command()
 async def remove_guild(interaction: discord.Interaction):
     """Remove a project"""
     try:
@@ -60,7 +60,7 @@ async def remove_guild(interaction: discord.Interaction):
         await interaction.response.send_message(f'Error: {e}')
 
 
-@client.tree.command()
+@bot.tree.command()
 # use this decorator to hide commmands from certain users
 # https://discordpy.readthedocs.io/en/latest/interactions/api.html?highlight=permissions#discord.app_commands.default_permissions
 @discord.app_commands.default_permissions()
@@ -71,4 +71,4 @@ async def fruit(interaction: discord.Interaction, fruits: Literal['apple', 'bana
 
 if __name__ == '__main__':
     print("logging in...")
-    client.run(DISCORD_TOKEN)
+    bot.run(DISCORD_TOKEN)

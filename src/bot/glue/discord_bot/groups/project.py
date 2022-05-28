@@ -1,9 +1,9 @@
 from discord import app_commands
 import discord
 from glue.database.database import Database
-from glue.discord_bot.groups.button import Button
-from glue.discord_bot.groups.select import DropdownView
-from glue.discord_bot.groups.modal import Questionnaire
+from glue.discord_bot.ui.button import Button
+from glue.discord_bot.ui.select import DropdownView
+from glue.discord_bot.ui.modal import Questionnaire
 from typing import Literal, Optional
 from glue.database.database import GlueGuild
 
